@@ -2,10 +2,10 @@ package xl_test
 
 import (
 	"testing"
-	"xl"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
+	"github.com/tomyl/xl"
 )
 
 const insertSchema = `

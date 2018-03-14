@@ -2,9 +2,9 @@ package xl_test
 
 import (
 	"testing"
-	"xl"
 
 	"github.com/stretchr/testify/require"
+	"github.com/tomyl/xl"
 )
 
 const deleteSchema = `

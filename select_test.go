@@ -3,9 +3,9 @@ package xl_test
 import (
 	"testing"
 	"time"
-	"xl"
 
 	"github.com/stretchr/testify/require"
+	"github.com/tomyl/xl"
 )
 
 const selectSchema = `
