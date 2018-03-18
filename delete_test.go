@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/tomyl/xl"
+	"github.com/tomyl/xl/logger"
 )
 
 const deleteSchema = `
@@ -20,7 +21,7 @@ insert into employee (id, updated, name, salary) values (2, current_timestamp, '
 `
 
 func TestDelete(t *testing.T) {
-	xl.SetLogger(xl.NewTestLogger(t))
+	xl.SetLogger(logger.Test(t))
 
 	db, err := xl.Open("sqlite3", ":memory:")
 	require.Nil(t, err)

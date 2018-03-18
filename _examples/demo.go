@@ -6,6 +6,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/tomyl/xl"
+	"github.com/tomyl/xl/logger"
 )
 
 const schema = `
@@ -53,7 +54,7 @@ func main() {
 		log.Fatalf("Failed to open database: %v", err)
 	}
 
-	xl.SetLogger(xl.ColorLogger)
+	xl.SetLogger(logger.Color)
 
 	if err := xl.MultiExec(db, schema); err != nil {
 		log.Fatalf("Failed to create schema: %v", err)

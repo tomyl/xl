@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/tomyl/xl"
+	"github.com/tomyl/xl/logger"
 )
 
 const selectSchema = `
@@ -40,7 +41,7 @@ func requireSQL(t *testing.T, sql string, s xl.Statementer) {
 }
 
 func TestSelect(t *testing.T) {
-	xl.SetLogger(xl.NewTestLogger(t))
+	xl.SetLogger(logger.Test(t))
 
 	// Create schema
 	db, err := xl.Open("sqlite3", ":memory:")

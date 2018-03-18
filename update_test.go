@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/tomyl/xl"
+	"github.com/tomyl/xl/logger"
 )
 
 const updateSchema = `
@@ -20,7 +21,7 @@ insert into employee (id, updated, name, salary) values (2, current_timestamp, '
 `
 
 func TestUpdate(t *testing.T) {
-	xl.SetLogger(xl.NewTestLogger(t))
+	xl.SetLogger(logger.Test(t))
 
 	db, err := xl.Connect("sqlite3", ":memory:")
 	require.Nil(t, err)
@@ -38,7 +39,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestTransactionCommit(t *testing.T) {
-	xl.SetLogger(xl.NewTestLogger(t))
+	xl.SetLogger(logger.Test(t))
 
 	db, err := xl.Open("sqlite3", ":memory:")
 	require.Nil(t, err)
@@ -50,7 +51,7 @@ func TestTransactionCommit(t *testing.T) {
 }
 
 func TestTransactionRollback(t *testing.T) {
-	xl.SetLogger(xl.NewTestLogger(t))
+	xl.SetLogger(logger.Test(t))
 
 	db, err := xl.Open("sqlite3", ":memory:")
 	require.Nil(t, err)

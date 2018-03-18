@@ -3,9 +3,20 @@ package xl
 import (
 	"database/sql"
 	"strings"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
+
+var logger Logger
+
+// A Logger functions logs executed statements.
+type Logger func(query string, params []interface{}, d time.Duration, rows int64, err error)
+
+// SetLogger installs a global logger.
+func SetLogger(fn Logger) {
+	logger = fn
+}
 
 // A Dialect keep tracks of SQL dialect-specific settings.
 type Dialect struct {
@@ -127,4 +138,18 @@ func MultiExec(e sqlx.Execer, query string) error {
 		}
 	}
 	return nil
+}
+
+func logResult(query string, params []interface{}, d time.Duration, result sql.Result, err error) {
+	if logger != nil {
+		var rows int64
+		rows = -1
+		if result != nil {
+			count, err := result.RowsAffected()
+			if err == nil {
+				rows = count
+			}
+		}
+		logger(query, params, d, rows, err)
+	}
 }

@@ -1,8 +1,7 @@
-package xl
+package logger
 
 import (
 	"bytes"
-	"database/sql"
 	"fmt"
 	"log"
 	"regexp"
@@ -28,33 +27,12 @@ var (
 )
 
 var reNonPrintable *regexp.Regexp
-var logger Logger
 
 func init() {
 	reNonPrintable = regexp.MustCompile(`[^[:print:]]`)
 }
 
-type Logger func(query string, params []interface{}, d time.Duration, rows int64, err error)
-
-func SetLogger(fn Logger) {
-	logger = fn
-}
-
-func logResult(query string, params []interface{}, d time.Duration, result sql.Result, err error) {
-	if logger != nil {
-		var rows int64
-		rows = -1
-		if result != nil {
-			count, err := result.RowsAffected()
-			if err == nil {
-				rows = count
-			}
-		}
-		logger(query, params, d, rows, err)
-	}
-}
-
-func SimpleLogger(query string, params []interface{}, d time.Duration, rows int64, err error) {
+func Simple(query string, params []interface{}, d time.Duration, rows int64, err error) {
 	if len(params) > 0 {
 		log.Printf("%s %s", query, prettyParams(params))
 	} else {
@@ -62,7 +40,7 @@ func SimpleLogger(query string, params []interface{}, d time.Duration, rows int6
 	}
 }
 
-func PlainLogger(query string, params []interface{}, dur time.Duration, rows int64, err error) {
+func Plain(query string, params []interface{}, dur time.Duration, rows int64, err error) {
 	paramstr := ""
 	durstr := ""
 	rowstr := ""
@@ -87,7 +65,7 @@ func PlainLogger(query string, params []interface{}, dur time.Duration, rows int
 	log.Printf("%s%s%s%s%s", query, paramstr, durstr, rowstr, errstr)
 }
 
-func ColorLogger(query string, params []interface{}, dur time.Duration, rows int64, err error) {
+func Color(query string, params []interface{}, dur time.Duration, rows int64, err error) {
 	color := gray
 	paramstr := ""
 	durstr := ""
@@ -149,7 +127,7 @@ func prettyParams(a []interface{}) string {
 	return b.String()
 }
 
-func NewTestLogger(t *testing.T) Logger {
+func Test(t *testing.T) func(string, []interface{}, time.Duration, int64, error) {
 	return func(query string, params []interface{}, d time.Duration, rows int64, err error) {
 		if len(params) > 0 {
 			t.Logf("%s %d %v %s", query, rows, d, prettyParams(params))
