@@ -7,27 +7,30 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// SQL dialect settings
+// A Dialect keep tracks of SQL dialect-specific settings.
 type Dialect struct {
 	// sqlx bind type
 	BindType int
 }
 
-// Wrapper type around sqlx.DB that implements xl.Execer and xl.Queryer interfaces.
+// A DB is a wrapper type around sqlx.DB that implements xl.Execer and xl.Queryer interfaces.
 type DB struct {
 	*sqlx.DB
 }
 
+// NewDB wraps an sqlx.DB object.
 func NewDB(db *sqlx.DB) *DB {
 	return &DB{db}
 }
 
+// Dialect returns a Dialect based on this database connection.
 func (db *DB) Dialect() Dialect {
 	return Dialect{
 		BindType: sqlx.BindType(db.DriverName()),
 	}
 }
 
+// Beginxl creates a transaction.
 func (db *DB) Beginxl() (*Tx, error) {
 	tx, err := db.Beginx()
 
@@ -110,7 +113,8 @@ type limitOffset struct {
 	offset int64
 }
 
-// Based on MultiExec from sqlx_test.go at github.com/jmoiron/sqlx
+// MultiExec executes a batch of SQL statements. Based on MultiExec from
+// sqlx_test.go at github.com/jmoiron/sqlx.
 func MultiExec(e sqlx.Execer, query string) error {
 	stmts := strings.Split(query, ";\n")
 	if len(strings.Trim(stmts[len(stmts)-1], " \n\t\r")) == 0 {
