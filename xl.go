@@ -80,12 +80,12 @@ type Queryer interface {
 	QueryRowx(query string, args ...interface{}) *sqlx.Row
 }
 
-type Table struct {
+type tableAlias struct {
 	name  string
 	alias string
 }
 
-func (t Table) String() string {
+func (t tableAlias) String() string {
 	if t.alias != "" {
 		return t.name + " " + t.alias
 	}

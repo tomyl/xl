@@ -10,7 +10,7 @@ import (
 
 type SelectQuery struct {
 	cols       []string
-	from       []Table
+	from       []tableAlias
 	subselects []*SelectQuery
 	joins      []tableJoin
 	where      []exprParams
@@ -22,7 +22,7 @@ type SelectQuery struct {
 func NewSelect() *SelectQuery {
 	return &SelectQuery{
 		cols:       make([]string, 0),
-		from:       make([]Table, 0),
+		from:       make([]tableAlias, 0),
 		subselects: make([]*SelectQuery, 0),
 		joins:      make([]tableJoin, 0),
 	}
@@ -47,12 +47,12 @@ func FromAlias(table, alias string) *SelectQuery {
 }
 
 func (q *SelectQuery) From(table string) *SelectQuery {
-	q.from = append(q.from, Table{table, ""})
+	q.from = append(q.from, tableAlias{table, ""})
 	return q
 }
 
 func (q *SelectQuery) FromAlias(table, alias string) *SelectQuery {
-	q.from = append(q.from, Table{table, alias})
+	q.from = append(q.from, tableAlias{table, alias})
 	return q
 }
 
