@@ -9,8 +9,9 @@ import (
 )
 
 type InsertQuery struct {
-	table  string
-	values []NamedValue
+	table     string
+	values    []NamedValue
+	returning string
 }
 
 func Insert(table string) *InsertQuery {
@@ -28,6 +29,10 @@ func (q *InsertQuery) Set(name string, param interface{}) {
 	q.values = append(q.values, namedParam{name, param})
 }
 
+func (q *InsertQuery) Returning(expr string) {
+	q.returning = expr
+}
+
 func (q *InsertQuery) Statement(d Dialect) (*Statement, error) {
 	if len(q.values) == 0 {
 		return nil, fmt.Errorf("no values")
@@ -41,6 +46,10 @@ func (q *InsertQuery) Statement(d Dialect) (*Statement, error) {
 	s.WriteString(") VALUES (")
 	writeInsertValues(&s, &params, q.values)
 	s.WriteString(")")
+
+	if q.returning != "" {
+		s.WriteString(" RETURNING " + q.returning)
+	}
 
 	query := s.String()
 
@@ -105,4 +114,12 @@ func (q *InsertQuery) ExecId(e Execer) (int64, error) {
 	}
 
 	return id, nil
+}
+
+func (q *InsertQuery) First(queryer Queryer, dest interface{}) error {
+	st, err := q.Statement(queryer.Dialect())
+	if err != nil {
+		return err
+	}
+	return st.First(queryer, dest)
 }

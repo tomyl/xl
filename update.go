@@ -9,9 +9,10 @@ import (
 )
 
 type UpdateQuery struct {
-	table  string
-	values []NamedValue
-	where  []exprParams
+	table     string
+	values    []NamedValue
+	where     []exprParams
+	returning string
 }
 
 func Update(table string) *UpdateQuery {
@@ -35,6 +36,10 @@ func (q *UpdateQuery) Where(expr string, params ...interface{}) {
 	q.where = append(q.where, exprParams{expr, params})
 }
 
+func (q *UpdateQuery) Returning(expr string) {
+	q.returning = expr
+}
+
 func (q *UpdateQuery) Statement(d Dialect) (*Statement, error) {
 	if len(q.values) == 0 {
 		return nil, fmt.Errorf("no values")
@@ -46,6 +51,10 @@ func (q *UpdateQuery) Statement(d Dialect) (*Statement, error) {
 	s.WriteString("UPDATE " + q.table + " SET ")
 	writeUpdateValues(&s, &params, q.values)
 	writeWhere(&s, &params, q.where, 0)
+
+	if q.returning != "" {
+		s.WriteString(" RETURNING " + q.returning)
+	}
 
 	query := s.String()
 
@@ -92,4 +101,12 @@ func (q *UpdateQuery) ExecOne(e Execer) error {
 		return err
 	}
 	return st.ExecOne(e)
+}
+
+func (q *UpdateQuery) First(queryer Queryer, dest interface{}) error {
+	st, err := q.Statement(queryer.Dialect())
+	if err != nil {
+		return err
+	}
+	return st.First(queryer, dest)
 }
