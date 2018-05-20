@@ -124,6 +124,12 @@ type limitOffset struct {
 	offset int64
 }
 
+func NextInt64(db Queryer, seq string) (int64, error) {
+	var pos int64
+	err := New("SELECT NEXTVAL('"+seq+"')").First(db, &pos)
+	return pos, err
+}
+
 // MultiExec executes a batch of SQL statements. Based on MultiExec from
 // sqlx_test.go at github.com/jmoiron/sqlx.
 func MultiExec(e sqlx.Execer, query string) error {
