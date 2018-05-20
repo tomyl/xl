@@ -6,7 +6,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
 	"github.com/tomyl/xl"
-	"github.com/tomyl/xl/logger"
+	"github.com/tomyl/xl/testlogger"
 )
 
 const insertSchema = `
@@ -19,7 +19,7 @@ create table employee (
 `
 
 func TestInsert(t *testing.T) {
-	xl.SetLogger(logger.Test(t))
+	xl.SetLogger(testlogger.Simple(t))
 
 	db, err := xl.Open("sqlite3", ":memory:")
 	require.Nil(t, err)

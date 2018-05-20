@@ -6,7 +6,6 @@ import (
 	"log"
 	"regexp"
 	"strings"
-	"testing"
 	"time"
 )
 
@@ -34,7 +33,7 @@ func init() {
 
 func Simple(query string, params []interface{}, d time.Duration, rows int64, err error) {
 	if len(params) > 0 {
-		log.Printf("%s %s", query, prettyParams(params))
+		log.Printf("%s %s", query, PrettyParams(params))
 	} else {
 		log.Print(query)
 	}
@@ -47,7 +46,7 @@ func Plain(query string, params []interface{}, dur time.Duration, rows int64, er
 	errstr := ""
 
 	if len(params) > 0 {
-		paramstr = " " + prettyParams(params)
+		paramstr = " " + PrettyParams(params)
 	}
 
 	if dur > 0 {
@@ -81,7 +80,7 @@ func Color(query string, params []interface{}, dur time.Duration, rows int64, er
 	}
 
 	if len(params) > 0 {
-		paramstr = " " + prettyParams(params)
+		paramstr = " " + PrettyParams(params)
 	}
 
 	if dur > 0 {
@@ -100,7 +99,7 @@ func Color(query string, params []interface{}, dur time.Duration, rows int64, er
 	log.Printf("%s%s%s%s%s%s%s", color, query, reset, paramstr, durstr, rowstr, errstr)
 }
 
-func prettyParams(a []interface{}) string {
+func PrettyParams(a []interface{}) string {
 	maxlen := 100
 	var b bytes.Buffer
 	b.WriteString("[")
@@ -125,14 +124,4 @@ func prettyParams(a []interface{}) string {
 	}
 	b.WriteString("]")
 	return b.String()
-}
-
-func Test(t *testing.T) func(string, []interface{}, time.Duration, int64, error) {
-	return func(query string, params []interface{}, d time.Duration, rows int64, err error) {
-		if len(params) > 0 {
-			t.Logf("%s %d %v %s", query, rows, d, prettyParams(params))
-		} else {
-			t.Logf("%s %d %v", query, rows, d)
-		}
-	}
 }
