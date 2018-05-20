@@ -100,6 +100,15 @@ func (q *InsertQuery) Exec(e Execer) (sql.Result, error) {
 	return st.Exec(e)
 }
 
+func (q *InsertQuery) ExecErr(e Execer) error {
+	st, err := q.Statement(e.Dialect())
+	if err != nil {
+		return err
+	}
+	_, err = st.Exec(e)
+	return err
+}
+
 func (q *InsertQuery) ExecId(e Execer) (int64, error) {
 	result, err := q.Exec(e)
 

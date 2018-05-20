@@ -87,6 +87,15 @@ func (q *UpdateQuery) Exec(e Execer) (sql.Result, error) {
 	return st.Exec(e)
 }
 
+func (q *UpdateQuery) ExecErr(e Execer) error {
+	st, err := q.Statement(e.Dialect())
+	if err != nil {
+		return err
+	}
+	_, err = st.Exec(e)
+	return err
+}
+
 func (q *UpdateQuery) ExecCount(e Execer) (int64, error) {
 	st, err := q.Statement(e.Dialect())
 	if err != nil {
