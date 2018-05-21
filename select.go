@@ -40,9 +40,9 @@ func From(table string) *SelectQuery {
 	return q
 }
 
-func FromAlias(table, alias string) *SelectQuery {
+func FromAs(table, alias string) *SelectQuery {
 	q := NewSelect()
-	q.FromAlias(table, alias)
+	q.FromAs(table, alias)
 	return q
 }
 
@@ -51,7 +51,7 @@ func (q *SelectQuery) From(table string) *SelectQuery {
 	return q
 }
 
-func (q *SelectQuery) FromAlias(table, alias string) *SelectQuery {
+func (q *SelectQuery) FromAs(table, alias string) *SelectQuery {
 	q.from = append(q.from, tableAlias{table, alias})
 	return q
 }

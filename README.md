@@ -138,8 +138,8 @@ func main() {
 	{
 		var entries []string
 		q := xl.Select("e.name")
-		q.FromAlias("employee", "e")
-		q.FromAlias("department", "d")
+		q.FromAs("employee", "e")
+		q.FromAs("department", "d")
 		q.Where("e.department_id=d.id")
 		q.Where("d.city=?", "Stockholm")
 		if err := q.All(db, &entries); err != nil {
@@ -156,11 +156,11 @@ func main() {
 		}
 
 		iq := xl.Select(`d.name "department.name"`)
-		iq.FromAlias("department", "d")
+		iq.FromAs("department", "d")
 		iq.Where("d.city=?", "Stockholm")
 
 		q := xl.Select(`e.name "employee.name"`)
-		q.FromAlias("employee", "e")
+		q.FromAs("employee", "e")
 		q.InnerJoin(iq, "d.id=e.department_id")
 		q.OrderBy("d.name, e.name")
 

@@ -85,7 +85,7 @@ func TestSelect(t *testing.T) {
 
 	{
 		var e []employee
-		q := xl.FromAlias("employee", "e")
+		q := xl.FromAs("employee", "e")
 		q.Columns("id")
 		q.Where("department_id=?", 2)
 		q.Where("salary >= 9000")
@@ -99,7 +99,7 @@ func TestSelect(t *testing.T) {
 
 	{
 		var e []employee
-		q := xl.FromAlias("employee", "e")
+		q := xl.FromAs("employee", "e")
 		q.Columns("id")
 		q.OrderBy("id")
 		q.LimitOffset(2, 1)
@@ -134,8 +134,8 @@ func TestSelect(t *testing.T) {
 		}
 
 		q := xl.Select(`d.name "department.name", e.name "employee.name"`)
-		q.FromAlias("department", "d")
-		q.FromAlias("employee", "e")
+		q.FromAs("department", "d")
+		q.FromAs("employee", "e")
 		q.Where("d.id=e.department_id")
 		q.OrderBy("d.name, e.name")
 		requireSQL(t, `SELECT d.name "department.name", e.name "employee.name" FROM department d, employee e WHERE d.id=e.department_id ORDER BY d.name, e.name`, q)
@@ -152,11 +152,11 @@ func TestSelect(t *testing.T) {
 		}
 
 		iq := xl.Select(`d.name "department.name"`)
-		iq.FromAlias("department", "d")
+		iq.FromAs("department", "d")
 		iq.Where("d.city=?", "Stockholm")
 
 		q := xl.Select(`e.name "employee.name"`)
-		q.FromAlias("employee", "e")
+		q.FromAs("employee", "e")
 		q.Where("e.salary>?", 10000)
 		q.InnerJoin(iq, "d.id=e.department_id")
 		q.OrderBy("d.name, e.name")
