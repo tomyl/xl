@@ -9,6 +9,7 @@ import (
 )
 
 type SelectQuery struct {
+	exprs      []string
 	cols       []string
 	from       []tableAlias
 	subselects []*SelectQuery
@@ -20,17 +21,18 @@ type SelectQuery struct {
 }
 
 func NewSelect() *SelectQuery {
-	return &SelectQuery{
-		cols:       make([]string, 0),
-		from:       make([]tableAlias, 0),
-		subselects: make([]*SelectQuery, 0),
-		joins:      make([]tableJoin, 0),
-	}
+	return &SelectQuery{}
 }
 
-func Select(cols string) *SelectQuery {
+func Select(expr string) *SelectQuery {
 	q := NewSelect()
-	q.Columns(cols)
+	q.Columns(expr)
+	return q
+}
+
+func SelectAlias(cols ...string) *SelectQuery {
+	q := NewSelect()
+	q.ColumnsAlias(cols...)
 	return q
 }
 
@@ -47,6 +49,9 @@ func FromAs(table, alias string) *SelectQuery {
 }
 
 func (q *SelectQuery) From(table string) *SelectQuery {
+	if q.from == nil {
+		q.from = make([]tableAlias, 0, 1)
+	}
 	q.from = append(q.from, tableAlias{table, ""})
 	return q
 }
@@ -56,8 +61,18 @@ func (q *SelectQuery) FromAs(table, alias string) *SelectQuery {
 	return q
 }
 
-func (q *SelectQuery) Columns(columns string) {
-	q.cols = append(q.cols, columns)
+func (q *SelectQuery) Columns(exprs ...string) {
+	if q.exprs == nil {
+		q.exprs = make([]string, 0, len(exprs))
+	}
+	q.exprs = append(q.exprs, exprs...)
+}
+
+func (q *SelectQuery) ColumnsAlias(columns ...string) {
+	if q.cols == nil {
+		q.cols = make([]string, 0, len(columns))
+	}
+	q.cols = append(q.cols, columns...)
 }
 
 func (q *SelectQuery) Where(expr string, params ...interface{}) {
@@ -81,7 +96,7 @@ func (q *SelectQuery) LimitOffset(limit, offset int64) *SelectQuery {
 }
 
 func (q *SelectQuery) Statement(d Dialect) (*Statement, error) {
-	if len(q.cols) == 0 {
+	if len(q.exprs) == 0 && len(q.cols) == 0 {
 		return nil, errors.New("no columns")
 	}
 
@@ -175,11 +190,30 @@ func writeWhere(s *bytes.Buffer, params *[]interface{}, where []exprParams, coun
 }
 
 func (q *SelectQuery) writeSelectColumns(s *bytes.Buffer, params *[]interface{}, count int) int {
+	alias := ""
+
+	if len(q.from) > 0 {
+		alias = q.from[0].alias
+	}
+
 	for i := range q.cols {
 		if count > 0 {
 			s.WriteString(", ")
 		}
-		s.WriteString(q.cols[i])
+		if alias != "" {
+			fullname := alias + "." + q.cols[i]
+			s.WriteString(fullname + " \"" + fullname + "\"")
+		} else {
+			s.WriteString(q.cols[i])
+		}
+		count++
+	}
+
+	for i := range q.exprs {
+		if count > 0 {
+			s.WriteString(", ")
+		}
+		s.WriteString(q.exprs[i])
 		count++
 	}
 
@@ -203,10 +237,16 @@ func (q *SelectQuery) All(queryer Queryer, dest interface{}) error {
 }
 
 func (q *SelectQuery) InnerJoin(jq *SelectQuery, cond string, params ...interface{}) {
+	if q.joins == nil {
+		q.joins = make([]tableJoin, 0, 1)
+	}
 	q.joins = append(q.joins, tableJoin{jq, "INNER JOIN", cond, params})
 }
 
 func (q *SelectQuery) FromSubselect(sq *SelectQuery) {
+	if q.subselects == nil {
+		q.subselects = make([]*SelectQuery, 0, 1)
+	}
 	q.subselects = append(q.subselects, sq)
 }
 

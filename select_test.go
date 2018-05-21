@@ -169,6 +169,29 @@ func TestSelect(t *testing.T) {
 	}
 
 	{
+		var e []struct {
+			department `db:"d"`
+			employee   `db:"e"`
+		}
+
+		iq := xl.SelectAlias("name")
+		iq.FromAs("department", "d")
+		iq.Where("d.city=?", "Stockholm")
+
+		q := xl.SelectAlias("name")
+		q.FromAs("employee", "e")
+		q.Where("e.salary>?", 10000)
+		q.InnerJoin(iq, "d.id=e.department_id")
+		q.OrderBy("d.name, e.name")
+
+		requireSQL(t, `SELECT e.name "e.name", d.name "d.name" FROM employee e INNER JOIN department d ON d.id=e.department_id WHERE e.salary>? AND d.city=? ORDER BY d.name, e.name`, q)
+		require.Nil(t, q.All(db, &e))
+		require.Equal(t, 1, len(e))
+		require.Equal(t, "HR", e[0].department.Name)
+		require.Equal(t, "Alice Örn", e[0].employee.Name)
+	}
+
+	{
 		var e []int
 
 		sq := xl.Select(`sum(salary) "total_salary"`).From("employee")

@@ -171,6 +171,29 @@ func main() {
 		log.Printf("Employees: %v", entries)
 	}
 
+	// Same as above, just using SelectAlias instead of Select
+	{
+		var entries []struct {
+			Department `db:"d"`
+			Employee   `db:"e"`
+		}
+
+		iq := xl.SelectAlias("name")
+		iq.FromAs("department", "d")
+		iq.Where("d.city=?", "Stockholm")
+
+		q := xl.SelectAlias("name")
+		q.FromAs("employee", "e")
+		q.InnerJoin(iq, "d.id=e.department_id")
+		q.OrderBy("d.name, e.name")
+
+		if err := q.All(db, &entries); err != nil {
+			log.Fatalf("Failed to select: %v", err)
+		}
+
+		log.Printf("Employees: %v", entries)
+	}
+
 	// Delete employee
 	{
 		q := xl.Delete("employee")
