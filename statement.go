@@ -33,6 +33,15 @@ func (s *Statement) Exec(e Execer) (sql.Result, error) {
 	return result, err
 }
 
+// Pass compiled SQL and parameters to sqlx.QueryRowx.
+func (s *Statement) QueryRowx(q Queryer) *sqlx.Row {
+	t0 := time.Now()
+	row := q.QueryRowx(s.SQL, s.Params...)
+	t1 := time.Now()
+	logResult(s.SQL, s.Params, t1.Sub(t0), nil, nil)
+	return row
+}
+
 // Pass compiled SQL and parameters to sqlx.Select.
 func (s *Statement) All(q Queryer, dest interface{}) error {
 	t0 := time.Now()

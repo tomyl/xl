@@ -236,6 +236,33 @@ func (q *SelectQuery) All(queryer Queryer, dest interface{}) error {
 	return st.All(queryer, dest)
 }
 
+// Count re-runs the query without LIMIT/OFFSET and returns the COUNT. This
+// operation will modify the query object inplace so don't use after calling
+// this method.
+func (q *SelectQuery) Total(queryer Queryer) (int, error) {
+	q.cols = nil
+	q.exprs = []string{"COUNT(*)"}
+	q.orderBy = nil
+	q.groupBy = ""
+	q.limit = nil
+
+	for i := range q.joins {
+		q.joins[i].query.cols = nil
+		q.joins[i].query.exprs = nil
+	}
+
+	st, err := q.Statement(queryer.Dialect())
+
+	if err != nil {
+		return 0, err
+	}
+
+	var count int
+	err = st.QueryRowx(queryer).Scan(&count)
+
+	return count, err
+}
+
 func (q *SelectQuery) InnerJoin(jq *SelectQuery, cond string, params ...interface{}) {
 	if q.joins == nil {
 		q.joins = make([]tableJoin, 0, 1)

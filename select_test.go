@@ -108,6 +108,10 @@ func TestSelect(t *testing.T) {
 		require.Equal(t, 2, len(e))
 		require.Equal(t, int64(2), e[0].ID)
 		require.Equal(t, int64(3), e[1].ID)
+
+		total, err := q.Total(db)
+		require.Nil(t, err)
+		require.Equal(t, 5, total)
 	}
 
 	{
