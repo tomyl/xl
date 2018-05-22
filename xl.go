@@ -49,7 +49,7 @@ func (db *DB) Beginxl() (*Tx, error) {
 		return nil, err
 	}
 
-	return &Tx{tx, false, false}, nil
+	return &Tx{db, tx, false, false}, nil
 }
 
 func Open(driver, params string) (*DB, error) {
