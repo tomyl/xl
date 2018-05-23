@@ -1,4 +1,4 @@
-# xl
+# xl :pig:
 
 [![Build Status](https://travis-ci.org/tomyl/xl.svg?branch=master)](https://travis-ci.org/tomyl/xl)
 [![GoDoc](https://godoc.org/github.com/tomyl/xl?status.png)](http://godoc.org/github.com/tomyl/xl)
