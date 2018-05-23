@@ -9,47 +9,107 @@ import (
 	"github.com/tomyl/xl/testlogger"
 )
 
-func TestContext(t *testing.T) {
+func TestRollback(t *testing.T) {
 	xl.SetLogger(testlogger.Simple(t))
 
 	db, err := xl.Open("sqlite3", ":memory:")
 	require.Nil(t, err)
 	require.Nil(t, xl.MultiExec(db, selectSchema))
 
-	origctx := xl.WithDB(context.Background(), db)
-
-	ctx, err := origctx.Begin()
-	require.Nil(t, err)
+	ctx := xl.WithDB(context.Background(), db)
 
 	{
-		var count int
-		err := xl.New("SELECT COUNT(*) FROM employee").First(ctx.Tx(), &count)
+		var salary int
+		err := xl.New("SELECT salary FROM employee WHERE id=1").First(ctx.Tx(), &salary)
 		require.Nil(t, err)
-		require.Equal(t, 5, count)
+		require.Equal(t, 12000, salary)
 	}
 
 	{
-		count, err := xl.New("DELETE FROM employee").ExecCount(ctx.Tx())
-		require.Nil(t, err)
-		require.Equal(t, int64(5), count)
-	}
-
-	{
-		var count int
-		err := xl.New("SELECT COUNT(*) FROM employee").First(ctx.Tx(), &count)
-		require.Nil(t, err)
-		require.Equal(t, 0, count)
-	}
-
-	{
-		err := ctx.Commit()
+		err := testTx(t, ctx, true)
 		require.Nil(t, err)
 	}
 
 	{
-		var count int
-		err := xl.New("SELECT COUNT(*) FROM employee").First(origctx.Tx(), &count)
+		var salary int
+		err := xl.New("SELECT salary FROM employee WHERE id=1").First(ctx.Tx(), &salary)
 		require.Nil(t, err)
-		require.Equal(t, 0, count)
+		require.Equal(t, 12000, salary)
 	}
+
+	{
+		err := testNestedTx(t, ctx, true)
+		require.Nil(t, err)
+	}
+
+	{
+		var salary int
+		err := xl.New("SELECT salary FROM employee WHERE id=1").First(ctx.Tx(), &salary)
+		require.Nil(t, err)
+		require.Equal(t, 12000, salary)
+	}
+
+	{
+		err := testNestedTx(t, ctx, false)
+		require.Nil(t, err)
+	}
+
+	{
+		var salary int
+		err := xl.New("SELECT salary FROM employee WHERE id=1").First(ctx.Tx(), &salary)
+		require.Nil(t, err)
+		require.Equal(t, 20000, salary)
+	}
+}
+
+func testTx(t *testing.T, ctx xl.Context, rollback bool) error {
+	ctx, err := ctx.Begin()
+
+	if err != nil {
+		return err
+	}
+
+	defer ctx.Rollback()
+
+	q := xl.Update("employee")
+	q.Where("id=?", 1)
+	q.Set("salary", 20000)
+
+	if err := q.ExecOne(ctx.Tx()); err != nil {
+		return err
+	}
+
+	if rollback {
+		return nil
+	}
+
+	return ctx.Commit()
+}
+
+func testNestedTx(t *testing.T, ctx xl.Context, rollback bool) error {
+	ctx, err := ctx.Begin()
+
+	if err != nil {
+		return err
+	}
+
+	defer ctx.Rollback()
+
+	q := xl.Update("employee")
+	q.Where("id=?", 1)
+	q.Set("salary", 30000)
+
+	if err := q.ExecOne(ctx.Tx()); err != nil {
+		return err
+	}
+
+	if err := testTx(t, ctx, false); err != nil {
+		return err
+	}
+
+	if rollback {
+		return nil
+	}
+
+	return ctx.Commit()
 }
