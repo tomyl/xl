@@ -42,3 +42,12 @@ func TestInsert(t *testing.T) {
 		require.Equal(t, int64(1), id)
 	}
 }
+
+func TestReturning(t *testing.T) {
+	q := xl.Insert("employee")
+	q.Set("name", "Alice Örn")
+	q.Returning("id")
+	st, err := q.Statement(xl.Dialect{})
+	require.Nil(t, err)
+	require.Equal(t, "INSERT INTO employee (name) VALUES (?) RETURNING id", st.SQL)
+}

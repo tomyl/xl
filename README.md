@@ -11,7 +11,6 @@ SQL query builder for golang. Build on top of [sqlx](https://github.com/jmoiron/
 
 # TODO
 
-- [ ] Better support for Postgres e.g. RETURNING.
 - [ ] Finish this TODO list.
 
 # Similar software
