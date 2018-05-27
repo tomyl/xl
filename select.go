@@ -236,22 +236,130 @@ func (q *SelectQuery) All(queryer Queryer, dest interface{}) error {
 	return st.All(queryer, dest)
 }
 
-// Count re-runs the query without LIMIT/OFFSET and returns the COUNT. This
-// operation will modify the query object inplace so don't use after calling
-// this method.
-func (q *SelectQuery) Total(queryer Queryer) (int, error) {
-	q.cols = nil
-	q.exprs = []string{"COUNT(*)"}
-	q.orderBy = nil
-	q.groupBy = ""
-	q.limit = nil
-
-	for i := range q.joins {
-		q.joins[i].query.cols = nil
-		q.joins[i].query.exprs = nil
+func (q *SelectQuery) Clone() *SelectQuery {
+	cq := &SelectQuery{
+		exprs:      copyStrings(q.exprs),
+		cols:       copyStrings(q.cols),
+		from:       copyTableAliases(q.from),
+		subselects: copySubselects(q.subselects),
+		joins:      copyJoins(q.joins),
+		where:      copyWhere(q.where),
+		orderBy:    copyOrderBy(q.orderBy),
+		groupBy:    q.groupBy,
+		limit:      copyLimitOffset(q.limit),
 	}
 
-	st, err := q.Statement(queryer.Dialect())
+	return cq
+}
+
+func copyStrings(a []string) []string {
+	if a == nil {
+		return nil
+	}
+
+	b := make([]string, len(a))
+	copy(b, a)
+
+	return b
+}
+
+func copyTableAliases(a []tableAlias) []tableAlias {
+	if a == nil {
+		return nil
+	}
+
+	b := make([]tableAlias, len(a))
+	copy(b, a)
+
+	return b
+}
+
+func copySubselects(a []*SelectQuery) []*SelectQuery {
+	if a == nil {
+		return nil
+	}
+
+	b := make([]*SelectQuery, len(a))
+
+	for i := range a {
+		b[i] = a[i].Clone()
+	}
+
+	return b
+}
+
+func copyJoins(a []tableJoin) []tableJoin {
+	if a == nil {
+		return nil
+	}
+
+	b := make([]tableJoin, len(a))
+
+	for i := range a {
+		b[i] = tableJoin{
+			query:    a[i].query.Clone(),
+			joinType: a[i].joinType,
+			cond:     a[i].cond,
+			params:   copyParams(a[i].params),
+		}
+	}
+
+	return b
+}
+
+func copyParams(a []interface{}) []interface{} {
+	if a == nil {
+		return nil
+	}
+
+	b := make([]interface{}, len(a))
+	copy(b, a)
+
+	return b
+}
+
+func copyWhere(a []exprParams) []exprParams {
+	if a == nil {
+		return nil
+	}
+
+	b := make([]exprParams, len(a))
+	copy(b, a)
+
+	return b
+}
+
+func copyOrderBy(a *exprParams) *exprParams {
+	if a == nil {
+		return nil
+	}
+
+	return &exprParams{a.expr, copyParams(a.params)}
+}
+
+func copyLimitOffset(a *limitOffset) *limitOffset {
+	if a == nil {
+		return nil
+	}
+
+	return &limitOffset{a.limit, a.offset}
+}
+
+// Count runs this query without LIMIT/OFFSET and returns the COUNT.
+func (q *SelectQuery) Total(queryer Queryer) (int, error) {
+	tq := q.Clone()
+	tq.cols = nil
+	tq.exprs = []string{"COUNT(*)"}
+	tq.orderBy = nil
+	tq.groupBy = ""
+	tq.limit = nil
+
+	for i := range tq.joins {
+		tq.joins[i].query.cols = nil
+		tq.joins[i].query.exprs = nil
+	}
+
+	st, err := tq.Statement(queryer.Dialect())
 
 	if err != nil {
 		return 0, err

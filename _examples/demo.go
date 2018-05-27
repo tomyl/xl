@@ -107,6 +107,15 @@ func main() {
 			log.Fatalf("Failed to select: %v", err)
 		}
 		log.Printf("Employee: %v", entry)
+
+		// Re-run query with COUNT(*) and without LIMIT/OFFSET. Useful for pagination.
+		count, err := q.Total(db)
+
+		if err != nil {
+			log.Fatalf("Failed to count: %v", err)
+		}
+
+		log.Printf("%d employees", count)
 	}
 
 	// Select employee names from Stockholm department
