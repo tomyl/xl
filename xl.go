@@ -1,3 +1,4 @@
+// Package xl provides convenience functions for building SQL queries.
 package xl
 
 import (
@@ -41,7 +42,7 @@ func (db *DB) Dialect() Dialect {
 	}
 }
 
-// Beginxl creates a transaction.
+// Beginxl starts a transaction.
 func (db *DB) Beginxl() (*Tx, error) {
 	tx, err := db.Beginx()
 
@@ -52,27 +53,33 @@ func (db *DB) Beginxl() (*Tx, error) {
 	return &Tx{db, tx, false, false}, nil
 }
 
-func Open(driver, params string) (*DB, error) {
-	db, err := sqlx.Open(driver, params)
+// Open connects to a database.
+func Open(driver, dsn string) (*DB, error) {
+	db, err := sqlx.Open(driver, dsn)
 	if err != nil {
 		return nil, err
 	}
 	return NewDB(db), nil
 }
 
-func Connect(driver, params string) (*DB, error) {
-	db, err := sqlx.Connect(driver, params)
+// Connect is same as Open except it verifies with a ping.
+func Connect(driver, dsn string) (*DB, error) {
+	db, err := sqlx.Connect(driver, dsn)
 	if err != nil {
 		return nil, err
 	}
 	return NewDB(db), nil
 }
 
+// Execer can execute an SQL query and is also aware of which SQL dialect the
+// database speaks.
 type Execer interface {
 	Dialect() Dialect
 	Exec(query string, args ...interface{}) (sql.Result, error)
 }
 
+// Execer can execute an SQL query and fetch fetch the ros and is also aware of
+// which SQL dialect the database speaks.
 type Queryer interface {
 	Dialect() Dialect
 	Query(query string, args ...interface{}) (*sql.Rows, error)
