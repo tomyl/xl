@@ -4,9 +4,8 @@
 [![GoDoc](https://godoc.org/github.com/tomyl/xl?status.png)](http://godoc.org/github.com/tomyl/xl)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tomyl/xl)](https://goreportcard.com/report/github.com/tomyl/xl)
 [![codecov](https://codecov.io/gh/tomyl/xl/branch/master/graph/badge.svg)](https://codecov.io/gh/tomyl/xl)
-[![sourcegraph](https://sourcegraph.com/github.com/tomyl/xl/-/badge.svg)](https://sourcegraph.com/github.com/tomyl/xl)
 
-SQL query builder for golang. Build on top of [sqlx](https://github.com/jmoiron/sqlx). Used by [mört](https://github.com/tomyl/mort).
+SQL query builder for golang. Built on top of [sqlx](https://github.com/jmoiron/sqlx). Used by [mört](https://github.com/tomyl/mort).
 
 **Pre-alpha software**. Expect plenty of bugs and frequent breaking API changes.
 
