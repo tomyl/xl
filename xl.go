@@ -88,8 +88,9 @@ type Queryer interface {
 }
 
 type tableAlias struct {
-	name  string
-	alias string
+	name     string
+	alias    string
+	subquery *SelectQuery
 }
 
 func (t tableAlias) String() string {

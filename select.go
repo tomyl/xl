@@ -9,15 +9,14 @@ import (
 )
 
 type SelectQuery struct {
-	exprs      []string
-	cols       []string
-	from       []tableAlias
-	subselects []*SelectQuery
-	joins      []tableJoin
-	where      []exprParams
-	orderBy    *exprParams
-	groupBy    string
-	limit      *limitOffset
+	exprs   []string
+	cols    []string
+	from    []tableAlias
+	joins   []tableJoin
+	where   []exprParams
+	orderBy *exprParams
+	groupBy string
+	limit   *limitOffset
 }
 
 func NewSelect() *SelectQuery {
@@ -52,13 +51,30 @@ func (q *SelectQuery) From(table string) *SelectQuery {
 	if q.from == nil {
 		q.from = make([]tableAlias, 0, 1)
 	}
-	q.from = append(q.from, tableAlias{table, ""})
+	q.from = append(q.from, tableAlias{table, "", nil})
 	return q
 }
 
 func (q *SelectQuery) FromAs(table, alias string) *SelectQuery {
-	q.from = append(q.from, tableAlias{table, alias})
+	if q.from == nil {
+		q.from = make([]tableAlias, 0, 1)
+	}
+	q.from = append(q.from, tableAlias{table, alias, nil})
 	return q
+}
+
+func (q *SelectQuery) FromSubselect(sq *SelectQuery) {
+	if q.from == nil {
+		q.from = make([]tableAlias, 0, 1)
+	}
+	q.from = append(q.from, tableAlias{"", "", sq})
+}
+
+func (q *SelectQuery) FromSubselectAs(sq *SelectQuery, alias string) {
+	if q.from == nil {
+		q.from = make([]tableAlias, 0, 1)
+	}
+	q.from = append(q.from, tableAlias{"", alias, sq})
 }
 
 func (q *SelectQuery) Columns(exprs ...string) {
@@ -123,28 +139,23 @@ func (q *SelectQuery) writeSelect(s *bytes.Buffer, params *[]interface{}) {
 		colCount = j.query.writeSelectColumns(s, params, colCount)
 	}
 
-	fromCount := 0
-
 	if len(q.from) > 0 {
 		s.WriteString(" FROM ")
-		for _, table := range q.from {
-			if fromCount > 0 {
+		for i, table := range q.from {
+			if i > 0 {
 				s.WriteString(", ")
 			}
-			s.WriteString(table.String())
-			fromCount++
+			if table.subquery != nil {
+				s.WriteString("(")
+				table.subquery.writeSelect(s, params)
+				s.WriteString(")")
+				if table.alias != "" {
+					s.WriteString(" " + table.alias)
+				}
+			} else {
+				s.WriteString(table.String())
+			}
 		}
-	}
-
-	for _, sq := range q.subselects {
-		if fromCount == 0 {
-			s.WriteString(" FROM ")
-		} else {
-			s.WriteString(", ")
-		}
-		s.WriteString("(")
-		sq.writeSelect(s, params)
-		s.WriteString(")")
 	}
 
 	for _, j := range q.joins {
@@ -239,15 +250,14 @@ func (q *SelectQuery) All(queryer Queryer, dest interface{}) error {
 
 func (q *SelectQuery) Clone() *SelectQuery {
 	cq := &SelectQuery{
-		exprs:      copyStrings(q.exprs),
-		cols:       copyStrings(q.cols),
-		from:       copyTableAliases(q.from),
-		subselects: copySubselects(q.subselects),
-		joins:      copyJoins(q.joins),
-		where:      copyWhere(q.where),
-		orderBy:    copyOrderBy(q.orderBy),
-		groupBy:    q.groupBy,
-		limit:      copyLimitOffset(q.limit),
+		exprs:   copyStrings(q.exprs),
+		cols:    copyStrings(q.cols),
+		from:    copyTableAliases(q.from),
+		joins:   copyJoins(q.joins),
+		where:   copyWhere(q.where),
+		orderBy: copyOrderBy(q.orderBy),
+		groupBy: q.groupBy,
+		limit:   copyLimitOffset(q.limit),
 	}
 
 	return cq
@@ -271,20 +281,6 @@ func copyTableAliases(a []tableAlias) []tableAlias {
 
 	b := make([]tableAlias, len(a))
 	copy(b, a)
-
-	return b
-}
-
-func copySubselects(a []*SelectQuery) []*SelectQuery {
-	if a == nil {
-		return nil
-	}
-
-	b := make([]*SelectQuery, len(a))
-
-	for i := range a {
-		b[i] = a[i].Clone()
-	}
 
 	return b
 }
@@ -384,13 +380,6 @@ func (q *SelectQuery) LeftJoin(jq *SelectQuery, cond string, params ...interface
 		q.joins = make([]tableJoin, 0, 1)
 	}
 	q.joins = append(q.joins, tableJoin{jq, "LEFT JOIN", cond, params})
-}
-
-func (q *SelectQuery) FromSubselect(sq *SelectQuery) {
-	if q.subselects == nil {
-		q.subselects = make([]*SelectQuery, 0, 1)
-	}
-	q.subselects = append(q.subselects, sq)
 }
 
 type tableJoin struct {

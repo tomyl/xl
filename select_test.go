@@ -203,10 +203,10 @@ func TestSelect(t *testing.T) {
 		sq.GroupBy("department_id")
 
 		q := xl.Select("total_salary")
-		q.FromSubselect(sq)
+		q.FromSubselectAs(sq, "ss")
 		q.OrderBy("total_salary")
 
-		requireSQL(t, `SELECT total_salary FROM (SELECT sum(salary) "total_salary" FROM employee GROUP BY department_id) ORDER BY total_salary`, q)
+		requireSQL(t, `SELECT total_salary FROM (SELECT sum(salary) "total_salary" FROM employee GROUP BY department_id) ss ORDER BY total_salary`, q)
 		require.Nil(t, q.All(db, &e))
 		require.Equal(t, 2, len(e))
 		require.Equal(t, 22000, e[0])
