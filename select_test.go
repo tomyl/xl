@@ -1,6 +1,7 @@
 package xl_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -211,4 +212,15 @@ func TestSelect(t *testing.T) {
 		require.Equal(t, 22000, e[0])
 		require.Equal(t, 28000, e[1])
 	}
+}
+
+func ExampleSelectQuery_Where() {
+	q := xl.Select("salary").From("employee")
+	q.Where("name=?", "Alice Örn")
+	q.Where("(city='Hong Kong' OR city='Stockholm')")
+	st, _ := q.Statement(xl.Dialect{})
+	fmt.Println(st.SQL)
+
+	// Output:
+	// SELECT salary FROM employee WHERE name=? AND (city='Hong Kong' OR city='Stockholm')
 }

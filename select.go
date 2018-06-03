@@ -75,6 +75,7 @@ func (q *SelectQuery) ColumnsAlias(columns ...string) {
 	q.cols = append(q.cols, columns...)
 }
 
+// Where adds a WHERE clause. All WHERE clauses will be joined with AND. Note that Where doesn't surround the expression with parentheses.
 func (q *SelectQuery) Where(expr string, params ...interface{}) {
 	if q.where == nil {
 		q.where = make([]exprParams, 0)
@@ -376,6 +377,13 @@ func (q *SelectQuery) InnerJoin(jq *SelectQuery, cond string, params ...interfac
 		q.joins = make([]tableJoin, 0, 1)
 	}
 	q.joins = append(q.joins, tableJoin{jq, "INNER JOIN", cond, params})
+}
+
+func (q *SelectQuery) LeftJoin(jq *SelectQuery, cond string, params ...interface{}) {
+	if q.joins == nil {
+		q.joins = make([]tableJoin, 0, 1)
+	}
+	q.joins = append(q.joins, tableJoin{jq, "LEFT JOIN", cond, params})
 }
 
 func (q *SelectQuery) FromSubselect(sq *SelectQuery) {

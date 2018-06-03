@@ -29,6 +29,9 @@ func (q *UpdateQuery) Set(name string, param interface{}) {
 	q.values = append(q.values, namedParam{name, param})
 }
 
+// Where adds a WHERE clause. All WHERE clauses will be joined with AND. Note
+// that Where doesn't surround the expression with parentheses. See SelectQuery
+// doc for example.
 func (q *UpdateQuery) Where(expr string, params ...interface{}) {
 	if q.where == nil {
 		q.where = make([]exprParams, 0)

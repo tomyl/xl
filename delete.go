@@ -18,6 +18,9 @@ func Delete(table string) *DeleteQuery {
 	}
 }
 
+// Where adds a WHERE clause. All WHERE clauses will be joined with AND. Note
+// that Where doesn't surround the expression with parentheses. See SelectQuery
+// doc for example.
 func (q *DeleteQuery) Where(expr string, params ...interface{}) {
 	if q.where == nil {
 		q.where = make([]exprParams, 0)
