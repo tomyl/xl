@@ -51,7 +51,7 @@ func (q *SelectQuery) From(table string) *SelectQuery {
 	if q.from == nil {
 		q.from = make([]tableAlias, 0, 1)
 	}
-	q.from = append(q.from, tableAlias{table, "", nil})
+	q.from = append(q.from, tableAlias{table, "", nil, false})
 	return q
 }
 
@@ -59,7 +59,7 @@ func (q *SelectQuery) FromAs(table, alias string) *SelectQuery {
 	if q.from == nil {
 		q.from = make([]tableAlias, 0, 1)
 	}
-	q.from = append(q.from, tableAlias{table, alias, nil})
+	q.from = append(q.from, tableAlias{table, alias, nil, false})
 	return q
 }
 
@@ -67,14 +67,21 @@ func (q *SelectQuery) FromSubselect(sq *SelectQuery) {
 	if q.from == nil {
 		q.from = make([]tableAlias, 0, 1)
 	}
-	q.from = append(q.from, tableAlias{"", "", sq})
+	q.from = append(q.from, tableAlias{"", "", sq, false})
 }
 
 func (q *SelectQuery) FromSubselectAs(sq *SelectQuery, alias string) {
 	if q.from == nil {
 		q.from = make([]tableAlias, 0, 1)
 	}
-	q.from = append(q.from, tableAlias{"", alias, sq})
+	q.from = append(q.from, tableAlias{"", alias, sq, false})
+}
+
+func (q *SelectQuery) FromLateralSubselectAs(sq *SelectQuery, alias string) {
+	if q.from == nil {
+		q.from = make([]tableAlias, 0, 1)
+	}
+	q.from = append(q.from, tableAlias{"", alias, sq, true})
 }
 
 func (q *SelectQuery) Columns(exprs ...string) {
@@ -146,6 +153,9 @@ func (q *SelectQuery) writeSelect(s *bytes.Buffer, params *[]interface{}) {
 				s.WriteString(", ")
 			}
 			if table.subquery != nil {
+				if table.lateral {
+					s.WriteString("LATERAL ")
+				}
 				s.WriteString("(")
 				table.subquery.writeSelect(s, params)
 				s.WriteString(")")
@@ -369,17 +379,18 @@ func (q *SelectQuery) Total(queryer Queryer) (int, error) {
 }
 
 func (q *SelectQuery) InnerJoin(jq *SelectQuery, cond string, params ...interface{}) {
-	if q.joins == nil {
-		q.joins = make([]tableJoin, 0, 1)
-	}
-	q.joins = append(q.joins, tableJoin{jq, "INNER JOIN", cond, params})
+	q.Join(jq, "INNER JOIN", cond, params...)
 }
 
 func (q *SelectQuery) LeftJoin(jq *SelectQuery, cond string, params ...interface{}) {
+	q.Join(jq, "LEFT JOIN", cond, params...)
+}
+
+func (q *SelectQuery) Join(jq *SelectQuery, joinType, cond string, params ...interface{}) {
 	if q.joins == nil {
 		q.joins = make([]tableJoin, 0, 1)
 	}
-	q.joins = append(q.joins, tableJoin{jq, "LEFT JOIN", cond, params})
+	q.joins = append(q.joins, tableJoin{jq, joinType, cond, params})
 }
 
 type tableJoin struct {

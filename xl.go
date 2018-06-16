@@ -88,9 +88,12 @@ type Queryer interface {
 }
 
 type tableAlias struct {
-	name     string
-	alias    string
+	name  string
+	alias string
+
+	// For subselects
 	subquery *SelectQuery
+	lateral  bool
 }
 
 func (t tableAlias) String() string {
