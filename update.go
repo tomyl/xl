@@ -33,7 +33,7 @@ func (q *UpdateQuery) SetRaw(name, rawvalue string) {
 // SetNull is a shorthand for SetRaw(col, "NULL").
 //
 //   q.SetNull("error")
-func (q *UpdateQuery) SetNull(name) {
+func (q *UpdateQuery) SetNull(name string) {
 	q.values = append(q.values, namedValue{name, "NULL"})
 }
 
