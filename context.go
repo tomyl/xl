@@ -2,36 +2,59 @@ package xl
 
 import (
 	"context"
+	"time"
 )
 
 type Context interface {
 	context.Context
+	WithValue(key, value interface{}) TXContext
 	DB() *DB
 	Tx() *Tx
-	Begin() (Context, error)
+	Begin() (TXContext, error)
 	Rollback() error
 	Commit() error
 }
 
-type dbCtx struct {
-	context.Context
-	tx *Tx
+type TXContext struct {
+	base context.Context
+	tx   *Tx
 }
 
-func WithDB(ctx context.Context, db *DB) Context {
+func WithDB(ctx context.Context, db *DB) TXContext {
 	tx := &Tx{db, nil, false, false}
-	return dbCtx{ctx, tx}
+	return TXContext{ctx, tx}
 }
 
-func (c dbCtx) DB() *DB {
+func (c TXContext) Deadline() (time.Time, bool) {
+	return c.base.Deadline()
+}
+
+func (c TXContext) Done() <-chan struct{} {
+	return c.base.Done()
+}
+
+func (c TXContext) Err() error {
+	return c.base.Err()
+}
+
+func (c TXContext) Value(key interface{}) interface{} {
+	return c.base.Value(key)
+}
+
+func (c TXContext) WithValue(key, value interface{}) TXContext {
+	base := context.WithValue(c.base, key, value)
+	return TXContext{base, c.tx}
+}
+
+func (c TXContext) DB() *DB {
 	return c.tx.db
 }
 
-func (c dbCtx) Tx() *Tx {
+func (c TXContext) Tx() *Tx {
 	return c.tx
 }
 
-func (c dbCtx) Begin() (Context, error) {
+func (c TXContext) Begin() (TXContext, error) {
 	tx, err := c.tx.Beginxl()
 
 	if err != nil {
@@ -42,10 +65,10 @@ func (c dbCtx) Begin() (Context, error) {
 	return c, nil
 }
 
-func (c dbCtx) Rollback() error {
+func (c TXContext) Rollback() error {
 	return c.tx.Rollback()
 }
 
-func (c dbCtx) Commit() error {
+func (c TXContext) Commit() error {
 	return c.tx.Commit()
 }
