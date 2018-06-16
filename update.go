@@ -21,10 +21,25 @@ func Update(table string) *UpdateQuery {
 	}
 }
 
+// SetRaw sets column to provided SQL expression. The value will not be escaped
+// in any way. Use Set() for values provided by untrusted sources.
+//
+//   q.SetRaw("updated_at", "current_timestamp")
+//
 func (q *UpdateQuery) SetRaw(name, rawvalue string) {
 	q.values = append(q.values, namedValue{name, rawvalue})
 }
 
+// SetNull is a shorthand for SetRaw(col, "NULL").
+//
+//   q.SetNull("error")
+func (q *UpdateQuery) SetNull(name) {
+	q.values = append(q.values, namedValue{name, "NULL"})
+}
+
+// Set sets column to provided parameter.
+//
+//  q.Set("title", userTitle)
 func (q *UpdateQuery) Set(name string, param interface{}) {
 	q.values = append(q.values, namedParam{name, param})
 }
