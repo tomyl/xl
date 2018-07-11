@@ -157,6 +157,16 @@ func MultiExec(e sqlx.Execer, query string) error {
 	return nil
 }
 
+func Placeholders(n int) string {
+	if n <= 0 {
+		return "()"
+	}
+	if n == 1 {
+		return "(?)"
+	}
+	return "(?" + strings.Repeat(", ?", n-1) + ")"
+}
+
 func logResult(query string, params []interface{}, d time.Duration, result sql.Result, err error) {
 	if logger != nil {
 		var rows int64
