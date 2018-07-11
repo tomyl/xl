@@ -9,7 +9,7 @@ import (
 )
 
 type SelectQuery struct {
-	exprs   []string
+	exprs   []exprParams
 	cols    []string
 	from    []tableAlias
 	joins   []tableJoin
@@ -23,9 +23,10 @@ func NewSelect() *SelectQuery {
 	return &SelectQuery{}
 }
 
-func Select(expr string) *SelectQuery {
+func Select(expr string, params ...interface{}) *SelectQuery {
 	q := NewSelect()
-	q.Columns(expr)
+	q.Column(expr, params...)
+
 	return q
 }
 
@@ -84,11 +85,20 @@ func (q *SelectQuery) FromLateralSubselectAs(sq *SelectQuery, alias string) {
 	q.from = append(q.from, tableAlias{"", alias, sq, true})
 }
 
+func (q *SelectQuery) Column(expr string, params ...interface{}) {
+	if q.exprs == nil {
+		q.exprs = make([]exprParams, 0)
+	}
+	q.exprs = append(q.exprs, exprParams{expr, params})
+}
+
 func (q *SelectQuery) Columns(exprs ...string) {
 	if q.exprs == nil {
-		q.exprs = make([]string, 0, len(exprs))
+		q.exprs = make([]exprParams, 0)
 	}
-	q.exprs = append(q.exprs, exprs...)
+	for _, expr := range exprs {
+		q.exprs = append(q.exprs, exprParams{expr, nil})
+	}
 }
 
 func (q *SelectQuery) ColumnsAlias(columns ...string) {
@@ -235,7 +245,8 @@ func (q *SelectQuery) writeSelectColumns(s *bytes.Buffer, params *[]interface{},
 		if count > 0 {
 			s.WriteString(", ")
 		}
-		s.WriteString(q.exprs[i])
+		s.WriteString(q.exprs[i].expr)
+		*params = append(*params, q.exprs[i].params...)
 		count++
 	}
 
@@ -260,11 +271,11 @@ func (q *SelectQuery) All(queryer Queryer, dest interface{}) error {
 
 func (q *SelectQuery) Clone() *SelectQuery {
 	cq := &SelectQuery{
-		exprs:   copyStrings(q.exprs),
+		exprs:   copyExprParams(q.exprs),
 		cols:    copyStrings(q.cols),
 		from:    copyTableAliases(q.from),
 		joins:   copyJoins(q.joins),
-		where:   copyWhere(q.where),
+		where:   copyExprParams(q.where),
 		orderBy: copyOrderBy(q.orderBy),
 		groupBy: q.groupBy,
 		limit:   copyLimitOffset(q.limit),
@@ -325,7 +336,7 @@ func copyParams(a []interface{}) []interface{} {
 	return b
 }
 
-func copyWhere(a []exprParams) []exprParams {
+func copyExprParams(a []exprParams) []exprParams {
 	if a == nil {
 		return nil
 	}
@@ -356,7 +367,7 @@ func copyLimitOffset(a *limitOffset) *limitOffset {
 func (q *SelectQuery) Total(queryer Queryer) (int, error) {
 	tq := q.Clone()
 	tq.cols = nil
-	tq.exprs = []string{"COUNT(*)"}
+	tq.exprs = []exprParams{{"COUNT(*)", nil}}
 	tq.orderBy = nil
 	tq.groupBy = ""
 	tq.limit = nil
