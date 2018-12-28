@@ -9,14 +9,15 @@ import (
 )
 
 type SelectQuery struct {
-	exprs   []exprParams
-	cols    []string
-	from    []tableAlias
-	joins   []tableJoin
-	where   []exprParams
-	orderBy *exprParams
-	groupBy string
-	limit   *limitOffset
+	distinct bool
+	exprs    []exprParams
+	cols     []string
+	from     []tableAlias
+	joins    []tableJoin
+	where    []exprParams
+	orderBy  *exprParams
+	groupBy  string
+	limit    *limitOffset
 }
 
 func NewSelect() *SelectQuery {
@@ -85,6 +86,10 @@ func (q *SelectQuery) FromLateralSubselectAs(sq *SelectQuery, alias string) {
 	q.from = append(q.from, tableAlias{"", alias, sq, true})
 }
 
+func (q *SelectQuery) Distinct() {
+	q.distinct = true
+}
+
 func (q *SelectQuery) Column(expr string, params ...interface{}) {
 	if q.exprs == nil {
 		q.exprs = make([]exprParams, 0)
@@ -150,6 +155,11 @@ func (q *SelectQuery) Statement(d Dialect) (*Statement, error) {
 
 func (q *SelectQuery) writeSelect(s *bytes.Buffer, params *[]interface{}) {
 	s.WriteString("SELECT ")
+
+	if q.distinct {
+		s.WriteString("DISTINCT ")
+	}
+
 	colCount := q.writeSelectColumns(s, params, 0)
 
 	for _, j := range q.joins {
