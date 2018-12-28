@@ -112,6 +112,16 @@ func PrettyParams(a []interface{}) string {
 				s = s[:maxlen] + "..."
 			}
 			b.WriteString("`" + s + "`")
+		} else if ps, ok := e.(*string); ok {
+			if ps != nil {
+				s := *ps
+				if len(s) > maxlen {
+					s = s[:maxlen] + "..."
+				}
+				b.WriteString("`" + s + "`")
+			} else {
+				b.WriteString("nil")
+			}
 		} else if v, ok := e.([]byte); ok {
 			s := string(v)
 			if len(s) > maxlen {
