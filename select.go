@@ -253,6 +253,14 @@ func (q *SelectQuery) writeSelectColumns(s *bytes.Buffer, params *[]interface{},
 	return count
 }
 
+func (q *SelectQuery) Queryx(queryer Queryer) (*sqlx.Rows, error) {
+	st, err := q.Statement(queryer.Dialect())
+	if err != nil {
+		return nil, err
+	}
+	return st.Queryx(queryer)
+}
+
 func (q *SelectQuery) First(queryer Queryer, dest interface{}) error {
 	st, err := q.Statement(queryer.Dialect())
 	if err != nil {
