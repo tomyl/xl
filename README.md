@@ -1,6 +1,6 @@
 # xl :pig:
 
-[![Build Status](https://travis-ci.org/tomyl/xl.svg?branch=master)](https://travis-ci.org/tomyl/xl)
+[![Build Status](https://travis-ci.com/tomyl/xl.svg?branch=master)](https://travis-ci.org/tomyl/xl)
 [![GoDoc](https://godoc.org/github.com/tomyl/xl?status.png)](http://godoc.org/github.com/tomyl/xl)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tomyl/xl)](https://goreportcard.com/report/github.com/tomyl/xl)
 [![codecov](https://codecov.io/gh/tomyl/xl/branch/master/graph/badge.svg)](https://codecov.io/gh/tomyl/xl)
